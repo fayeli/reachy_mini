@@ -12,18 +12,16 @@ import numpy.typing as npt
 
 try:
     import gi
+except ImportError as e:
+    raise ImportError(
+        "The 'gi' module is required for GStreamerAudio but could not be imported. \
+        Please check the gstreamer installation."
+    ) from e
 
-    gi.require_version("Gst", "1.0")
-    gi.require_version("GstApp", "1.0")
-    from gi.repository import GLib, Gst, GstApp
+gi.require_version("Gst", "1.0")
+gi.require_version("GstApp", "1.0")
 
-    Gst.init(None)
-    GST_AVAILABLE = True
-except (ImportError, ValueError):
-    GST_AVAILABLE = False
-    Gst = None  # type: ignore
-    GLib = None  # type: ignore
-    GstApp = None  # type: ignore
+from gi.repository import GLib, Gst, GstApp  # noqa: E402
 
 
 class UDPJPEGFrameSender:
@@ -46,17 +44,11 @@ class UDPJPEGFrameSender:
             height (int): Height of the video frames.
             log_level (str): Logging level. Default: "INFO".
 
-        Raises:
-            RuntimeError: If GStreamer is not available.
-
         """
-        if not GST_AVAILABLE:
-            raise RuntimeError(
-                "GStreamer is not available. Please install python3-gi and GStreamer."
-            )
-
         self._logger = logging.getLogger(__name__)
         self._logger.setLevel(log_level)
+
+        Gst.init(None)
 
         self.width = width
         self.height = height
@@ -210,11 +202,9 @@ class UDPJPEGFrameSender:
                 f"({self.height}, {self.width}, 3)"
             )
 
-        # Convert numpy array to GStreamer buffer
         buf = Gst.Buffer.new_wrapped(frame.tobytes())
 
-        # Push buffer to appsrc
-        ret = self.appsrc.emit("push-buffer", buf)
+        ret = self.appsrc.push_buffer(buf)
         if ret != Gst.FlowReturn.OK:
             self._logger.warning(f"Failed to push buffer: {ret}")
 

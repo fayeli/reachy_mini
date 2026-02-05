@@ -12,7 +12,6 @@ import serial.tools.list_ports
 
 # Path to the unix socket created by WebRTC daemon for local camera access
 CAMERA_SOCKET_PATH = "/tmp/reachymini_camera_socket"
-CAMERA_SOCKET_PATH_MUJOCO = "/tmp/reachymini_camera_socket_mujoco"
 
 
 def is_localhost(ip: str | None) -> bool:
