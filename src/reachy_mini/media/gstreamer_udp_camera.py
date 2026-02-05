@@ -24,7 +24,7 @@ gi.require_version("GstApp", "1.0")
 from gi.repository import GLib, Gst, GstApp  # noqa: E402
 
 
-class UDPJPEGFrameSender:
+class GStreamerUDPCamera:
     """A class to send frames over UDP using GStreamer."""
 
     def __init__(
