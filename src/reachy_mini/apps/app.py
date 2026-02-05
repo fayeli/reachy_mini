@@ -267,7 +267,9 @@ def main() -> None:
     args = parse_args()
     console = Console()
     if args.command == "create":
-        created_path = assistant.create(console, app_name=args.app_name, app_path=args.path)
+        created_path = assistant.create(
+            console, app_name=args.app_name, app_path=args.path
+        )
         if args.publish and created_path:
             console.print("\nPublishing to Hugging Face Spaces...", style="bold blue")
             assistant.publish(

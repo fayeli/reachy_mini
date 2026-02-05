@@ -13,7 +13,6 @@ from importlib.resources import files
 from threading import Thread
 from typing import Annotated, Any, Optional
 
-import cv2
 import log_throttling
 import mujoco
 import mujoco.viewer
@@ -159,24 +158,34 @@ class MujocoBackend(Backend):
             took = time.time() - start_t
             time.sleep(max(0, self.streaming_timestep - took))
 
-    def rendering_loop(self, camera_name: str, port: int) -> None:
+    def rendering_loop(self, camera_name: str) -> None:
         """Offline Rendering loop for the Mujoco simulation.
 
-        Capture the image from the virtual camera_name and send it over UDP to the port or over WebSocket to the ws_uri.
+        Capture the image from the virtual camera_name and send it through the GStreamer UDP pipeline.
         """
-        streamer = UDPJPEGFrameSender(dest_port=port)
+        camera_size = CAMERA_SIZES[camera_name]
+        frame_sender = UDPJPEGFrameSender(
+            width=camera_size[0],
+            height=camera_size[1],
+            log_level=self.logger.level,
+        )
+        frame_sender.start()
+
         offscreen_renderer = self._get_renderer(camera_name)
         camera_id = self._get_camera_id(camera_name)
 
-        while not self.should_stop.is_set():
-            start_t = time.time()
-            offscreen_renderer.update_scene(self.data, camera_id)
+        try:
+            while not self.should_stop.is_set():
+                start_t = time.time()
+                offscreen_renderer.update_scene(self.data, camera_id)
 
-            im = offscreen_renderer.render()
-            streamer.send_frame(im)
+                im = offscreen_renderer.render()
+                frame_sender.send_frame(im)
 
-            took = time.time() - start_t
-            time.sleep(max(0, self.rendering_timestep - took))
+                took = time.time() - start_t
+                time.sleep(max(0, self.rendering_timestep - took))
+        finally:
+            frame_sender.close()
 
     def run(self) -> None:
         """Run the Mujoco simulation with a viewer.
@@ -238,7 +247,7 @@ class MujocoBackend(Backend):
             viewer.sync()
 
             rendering_thread = Thread(
-                target=self.rendering_loop, args=(CAMERA_REACHY, 5005), daemon=True
+                target=self.rendering_loop, args=(CAMERA_REACHY,), daemon=True
             )
             rendering_thread.start()
 

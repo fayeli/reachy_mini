@@ -35,7 +35,7 @@ from typing import Optional, Tuple, cast
 
 import gi
 
-from reachy_mini.daemon.utils import CAMERA_SOCKET_PATH, is_local_camera_available
+from reachy_mini.daemon.utils import CAMERA_SOCKET_PATH, clean_up_camera_socket
 from reachy_mini.media.camera_constants import (
     ArducamSpecs,
     CameraSpecs,
@@ -236,9 +236,7 @@ class GstWebRTC:
         tee = Gst.ElementFactory.make("tee")
         # make camera accessible to other applications via unixfdsrc/sink
         unixfdsink = Gst.ElementFactory.make("unixfdsink")
-        if is_local_camera_available():
-            # prevent crash if socket already exists
-            os.remove(CAMERA_SOCKET_PATH)
+        clean_up_camera_socket(CAMERA_SOCKET_PATH)
         unixfdsink.set_property("socket-path", CAMERA_SOCKET_PATH)
         queue_unixfd = Gst.ElementFactory.make("queue", "queue_unixfd")
         queue_encoder = Gst.ElementFactory.make("queue", "queue_encoder")

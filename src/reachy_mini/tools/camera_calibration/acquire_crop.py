@@ -52,7 +52,10 @@ def main() -> None:
         cv2.namedWindow("Reachy Mini Camera")
 
     with ReachyMini(media_backend="gstreamer") as reachy_mini:
-        if reachy_mini.media.camera is None or reachy_mini.media.camera.camera_specs is None:
+        if (
+            reachy_mini.media.camera is None
+            or reachy_mini.media.camera.camera_specs is None
+        ):
             print("ERROR: Could not access camera")
             return
 

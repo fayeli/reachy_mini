@@ -12,6 +12,7 @@ import serial.tools.list_ports
 
 # Path to the unix socket created by WebRTC daemon for local camera access
 CAMERA_SOCKET_PATH = "/tmp/reachymini_camera_socket"
+CAMERA_SOCKET_PATH_MUJOCO = "/tmp/reachymini_camera_socket_mujoco"
 
 
 def is_localhost(ip: str | None) -> bool:
@@ -36,7 +37,7 @@ def is_localhost(ip: str | None) -> bool:
     return ip in localhost_addresses or ip.startswith("127.")
 
 
-def is_local_camera_available() -> bool:
+def is_local_camera_available(path: str = CAMERA_SOCKET_PATH) -> bool:
     """Check if local camera access is available via the unix socket.
 
     On wireless Reachy Mini, the WebRTC daemon exposes raw camera frames
@@ -48,7 +49,13 @@ def is_local_camera_available() -> bool:
         True if the local camera socket exists and is accessible.
 
     """
-    return os.path.exists(CAMERA_SOCKET_PATH)
+    return os.path.exists(path)
+
+
+def clean_up_camera_socket(path: str = CAMERA_SOCKET_PATH) -> None:
+    """Remove the local camera socket file if it exists."""
+    if is_local_camera_available(path):
+        os.remove(path)
 
 
 def daemon_check(spawn_daemon: bool, use_sim: bool) -> None:
